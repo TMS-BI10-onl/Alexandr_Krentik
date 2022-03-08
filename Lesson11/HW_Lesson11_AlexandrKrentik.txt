@@ -1,0 +1,201 @@
+-- Вариант 1. Синхронизация таблиц в одном операторе MERGE
+-- В базе данных Test создана таблица dbo.data_for_merge из данных data_for_merge.csv
+-- Итоговая таблица с результатами dbo.count_function
+USE Test;
+GO
+DROP TABLE IF EXISTS count_function;
+GO
+CREATE TABLE count_function (
+	Function_name nvarchar(50),
+	Function_count INT);
+GO
+MERGE count_function target
+USING
+	(
+	SELECT DISTINCT fn.Function_name, COUNT (fn.Function_name) OVER (PARTITION BY fn.Function_name ORDER BY fn.Function_name) AS Function_count
+	FROM
+		(
+		SELECT a AS Function_name
+		FROM data_for_merge
+		WHERE a IS NOT NULL
+		UNION ALL
+		SELECT b
+		FROM data_for_merge
+		WHERE b IS NOT NULL
+		UNION ALL
+		SELECT c
+		FROM data_for_merge
+		WHERE c IS NOT NULL
+		UNION ALL
+		SELECT d
+		FROM data_for_merge
+		WHERE d IS NOT NULL
+		UNION ALL
+		SELECT e
+		FROM data_for_merge
+		WHERE e IS NOT NULL
+		UNION ALL
+		SELECT f
+		FROM data_for_merge
+		WHERE f IS NOT NULL
+		UNION ALL
+		SELECT g
+		FROM data_for_merge
+		WHERE g IS NOT NULL
+		UNION ALL
+		SELECT h
+		FROM data_for_merge
+		WHERE h IS NOT NULL
+		UNION ALL
+		SELECT i
+		FROM data_for_merge
+		WHERE i IS NOT NULL
+		) AS fn
+	) source
+	ON target.Function_name=source.Function_name
+WHEN MATCHED 
+	THEN UPDATE SET target.Function_count = source.Function_count
+WHEN NOT MATCHED BY TARGET
+	THEN INSERT (Function_name, Function_count)
+	VALUES (source.Function_name, source.Function_count)
+WHEN NOT MATCHED BY SOURCE
+	THEN DELETE ;
+
+
+/* Вариант 2. Синхронизация таблиц поочередно по каждому столбцу (нюанс в том, что это больше не синхронизация, 
+а обновление таблиц новыми значениями без удаления исключенных (отсутствующих) значений в другой таблице с использованием оператора MERGE)*/
+-- В базе данных Test создана таблица dbo.data_for_merge из данных data_for_merge.csv
+-- Итоговая таблица с результатами dbo.count_function
+USE Test;
+GO
+DROP TABLE IF EXISTS count_function;
+GO
+CREATE TABLE count_function (
+	Function_name nvarchar(50),
+	Function_count INT);
+GO
+MERGE count_function target
+USING 
+	(
+	SELECT a
+	FROM data_for_merge
+	WHERE a IS NOT NULL
+	) source
+	ON target.Function_name=source.a
+WHEN MATCHED
+	THEN UPDATE SET target.Function_count = target.Function_count+1
+WHEN NOT MATCHED BY TARGET
+	THEN INSERT (Function_name, Function_count)
+	VALUES (source.a, 1);
+GO
+MERGE count_function target
+USING 
+	(
+	SELECT b
+	FROM data_for_merge
+	WHERE b IS NOT NULL
+	) source
+	ON target.Function_name=source.b
+WHEN MATCHED
+	THEN UPDATE SET target.Function_count = target.Function_count+1
+WHEN NOT MATCHED BY TARGET
+	THEN INSERT (Function_name, Function_count)
+	VALUES (source.b, 1);
+GO
+MERGE count_function target
+USING 
+	(
+	SELECT c
+	FROM data_for_merge
+	WHERE c IS NOT NULL
+	) source
+	ON target.Function_name=source.c
+WHEN MATCHED
+	THEN UPDATE SET target.Function_count = target.Function_count+1
+WHEN NOT MATCHED BY TARGET
+	THEN INSERT (Function_name, Function_count)
+	VALUES (source.c, 1);
+GO
+MERGE count_function target
+USING 
+	(
+	SELECT d
+	FROM data_for_merge
+	WHERE d IS NOT NULL
+	) source
+	ON target.Function_name=source.d
+WHEN MATCHED
+	THEN UPDATE SET target.Function_count = target.Function_count+1
+WHEN NOT MATCHED BY TARGET
+	THEN INSERT (Function_name, Function_count)
+	VALUES (source.d, 1);
+GO
+MERGE count_function target
+USING 
+	(
+	SELECT e
+	FROM data_for_merge
+	WHERE e IS NOT NULL
+	) source
+	ON target.Function_name=source.e
+WHEN MATCHED
+	THEN UPDATE SET target.Function_count = target.Function_count+1
+WHEN NOT MATCHED BY TARGET
+	THEN INSERT (Function_name, Function_count)
+	VALUES (source.e, 1);
+GO
+MERGE count_function target
+USING 
+	(
+	SELECT f
+	FROM data_for_merge
+	WHERE f IS NOT NULL
+	) source
+	ON target.Function_name=source.f
+WHEN MATCHED
+	THEN UPDATE SET target.Function_count = target.Function_count+1
+WHEN NOT MATCHED BY TARGET
+	THEN INSERT (Function_name, Function_count)
+	VALUES (source.f, 1);
+GO
+MERGE count_function target
+USING 
+	(
+	SELECT g
+	FROM data_for_merge
+	WHERE g IS NOT NULL
+	) source
+	ON target.Function_name=source.g
+WHEN MATCHED
+	THEN UPDATE SET target.Function_count = target.Function_count+1
+WHEN NOT MATCHED BY TARGET
+	THEN INSERT (Function_name, Function_count)
+	VALUES (source.g, 1);
+GO
+MERGE count_function target
+USING 
+	(
+	SELECT h
+	FROM data_for_merge
+	WHERE h IS NOT NULL
+	) source
+	ON target.Function_name=source.h
+WHEN MATCHED
+	THEN UPDATE SET target.Function_count = target.Function_count+1
+WHEN NOT MATCHED BY TARGET
+	THEN INSERT (Function_name, Function_count)
+	VALUES (source.h, 1);
+GO
+MERGE count_function target
+USING 
+	(
+	SELECT i
+	FROM data_for_merge
+	WHERE i IS NOT NULL
+	) source
+	ON target.Function_name=source.i
+WHEN MATCHED
+	THEN UPDATE SET target.Function_count = target.Function_count+1
+WHEN NOT MATCHED BY TARGET
+	THEN INSERT (Function_name, Function_count)
+	VALUES (source.i, 1);
