@@ -1,0 +1,79 @@
+/*
+1.Пациенты (ID, ФИО, Дата рождения, Адрес, Телефон, ID участка)
+2.Врачи (ID, ФИО, Дата рождения, ID отделения, ID участка)
+3.Отделения (ID, Название отделения, ID глав врача)
+4.Участки (ID, Номер участка)
+5.Нозология (ID, Название, Код по МКБ, ID Отделения)
+6.Диагноз (ID, ID пациента, ID нозологии, дата появления первых симптомов, дата обращения, дата выставления диагноза, ID врача)
+7.Экстренное извещение (ID, ID пациента, ID диагноза, Дата отправления, ID врача)
+
+1.Patients (ID, full_name, date_of_birth, address, phone, plot_ID)
+2.Doctors (ID, full_name, date_of_birth, department_ID, plot_ID)
+3.Departments (ID, department_name, head_of_doctor_ID)
+4.Plots (ID, Plot_number)
+5.Nosology (ID, name, ICD_Code, department_ID)
+6.Diagnosis (ID, patient_ID, nosology_ID, date_of_first_symptoms, date_of_treatment, date_of_diagnosis, doctor_ID)
+7.Emergency_Notification (ID, patient_ID, diagnosis_ID, departure_date, doctor_ID)
+*/
+
+/*
+1. Вывести количество пациентов по возрасту (18-30 лет, 31-39 лет, 40-55 лет, 60 и старше),
+обратившихся в поликлинику с диагнозом "ОРИ" за январь месяц 2021 года,
+а также за январь месяц 2022 года. Результаты вывести в виде транспонированной таблицы. (Оси - группы пациентов и годы обращений).
+*/
+SELECT YEAR, [1] AS 'Quantity Patient (18-30)', [2] AS 'Quantity Patient (31-39)', [3] AS 'Quantity Patient (40-55)', [4] AS 'Quantity Patient (>55)'
+FROM (
+		SELECT 1,
+				YEAR(diag.date_of_treatment) AS YEAR, 
+				CASE DATEDIFF(year, pat.date_of_birth, GETDATE()) - IIF(DATEPART(DAYOFYEAR, pat.date_of_birth) - DATEPART(DAYOFYEAR,GETDATE()) > 0,1,0)
+					WHEN BETWEEN 18 AND 30 THEN '1'
+					WHEN BETWEEN 31 AND 39 THEN '2'
+					WHEN BETWEEN 40 AND 55 THEN '3' --диапазон взят свыше 55 лет, т.к. по условию "60 и старше" выпадает диапазон с 55 до 60 лет
+					ELSE '4'
+				END AS AgeRange
+		FROM Patients AS pat
+			LEFT JOIN (SELECT *
+				FROM Diagnosis AS d
+					LEFT JOIN Nosology AS n
+					ON diag.nosology_ID = nos.nosology ID) AS diag
+				ON pat.Patient_ID = diag.Patient_ID
+			WHERE diag.Diagnosis LIKE 'ОРИ'
+					AND YEAR(diag.date_of_treatment) IN ('2021', '2022')
+					AND MONTH(diag.date_of_treatment) = 1
+		)
+AS SourceTable
+PIVOT
+(	
+	SUM(1)
+	FOR AgeRange IN ([1], [2], [3], [4])
+	)
+AS PivotTable
+ORDER BY Year;
+
+/*
+2. Проверить по всем ли диагнозам отправлены экстренные извещения в положенный срок (1 день после выставления диагноза) за январь-февраль 2022 года. 
+Вывести id извещения, фио пациента, ФИО врача, отделение, статус экстренного извещения (отправлено\отправлено с опозданием\не отправлено).
+*/
+
+SELECT notif.Emergency_Notification_ID,
+		diagfull.full_name,
+		docfull.full_name,
+		docfull.department_name,
+		CASE DATEDIFF(DAY, diagfull.date_of_diagnosis, notif.departure_date)
+			WHEN = 1 THEN 'отправлено'
+			WHEN > 1 THEN 'отправлено с опозданием'
+			WHEN IS NULL THEN 'не отправлено'
+		END AS Notification_status
+FROM (SELECT * 
+		FROM Diagnosis AS diag
+		LEFT JOIN Patients AS pac
+		ON diag.patient_ID = pac.patient_ID) AS diagfull
+		LEFT JOIN Emergency_Notification AS notif
+		ON diagfull.Patient_ID = notif.Patient_ID
+		LEFT JOIN (SELECT *
+					FROM Doctors AS doc
+					LEFT JOIN Departments AS dep
+					ON doc.department_ID = dep.department_ID) AS docfull
+		ON diagfull.doctor_ID = docfull.doctor_ID
+WHERE YEAR(diagfull.date_of_diagnosis) = 2022
+	AND MONTH(diagfull.date_of_diagnosis) IN (1, 2);
