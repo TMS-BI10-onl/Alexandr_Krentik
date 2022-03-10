@@ -1,0 +1,9 @@
+Well done!
+
+First option is too heavy. Second option is correct.
+
+-1
+Why do we need to merge a table with a subquery? We can just merge two tables. Null filtering can be done in the other place.
+
+Mark: 9
+Test mark:8
