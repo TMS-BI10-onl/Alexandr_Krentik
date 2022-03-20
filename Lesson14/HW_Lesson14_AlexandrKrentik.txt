@@ -1,0 +1,46 @@
+Task1.
+CREATE VIEW Seller_rating AS
+SELECT DISTINCT TOP 50 CONCAT(m.FirstName, ' ' , m.LastName) AS Manager
+	,SUM (Number_of_points_per_day) AS Number_of_points
+FROM 
+	(
+	SELECT m.FirstName, m.LastName, s.Date, CASE WHEN cnt < 5 THEN '1'
+							WHEN cnt >= 5 THEN '2'
+							WHEN cnt >= 10 THEN '3'
+							END AS Number_of_points_per_day
+	FROM
+		(
+		SELECT m.FirstName, m.LastName, s.Date, COUNT (1) AS cnt	
+		FROM Sale_fct AS s LEFT JOIN Manager_dim AS m ON s.ManagerID = m.ManagerID
+		GROUP BY m.FirstName, m.LastName, s.Date 
+		) t
+	) t1
+GROUP BY m.FirstName, m.LastName
+ORDER BY Number_of_points DESC;
+
+Task2.
+График a.
+1. Убрать фон области диаграммы;
+2. Убрать легенду, так как эта же информация отражена на подписи горизонтальной оси;
+3. Убрать тени;
+4. Столбцы сделать одним цветом, так как определенные цвета притягивают внимание;
+5. Добавить подписи данных.
+
+Task3.
+График b.
+1. Если общее количество компаний 50, то нагляднее будет представить в виде Pie chart;
+2. Добавить название диаграммы;
+Если оставлять Bar chart, то:
+3. Убрать объемность;
+4. Убрать тени;
+5. Конусы заменить столбцами;
+6. Диапазон значений расширить от 0 до 45.
+
+Task4.
+График c.
+1. Нагляднее будет представить в виде Line chart;
+2. Конкретизировать название диаграммы;
+3. Название осей разместить около осей, убрать слова «(сумма гр.4,7)»;
+4. Подписи к горизонтальной оси разместить горизонтально;
+5. Диапазон значений уменьшить от 5 000 до 5 500 тыс. чел.
+6. Добавить подписи данных.
