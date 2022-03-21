@@ -1,0 +1,6 @@
+Well done!
+
+1. -0.5
+There's no need in 3rd subquery. Count(1) and case count can be done in one query.
+
+Mark: 10
