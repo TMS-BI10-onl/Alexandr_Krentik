@@ -1,0 +1,79 @@
+1. Найти ProductSubcategoryID из Production.Product, где мин вес такого ProductSubcategoryID больше 150.
+SELECT DISTINCT ProductSubcategoryID, Weight
+FROM
+(
+SELECT ProductSubcategoryID, Weight, RANK() OVER (PARTITION BY ProductSubcategoryID ORDER BY Weight) AS rnk
+FROM Production.Product
+WHERE Weight > 150
+) t
+WHERE rnk=1;
+
+2. Найти самый дорогой продукт (поле StandardCost) из Production.Product. (4 способа)
+--1
+SELECT TOP 1 WITH TIES Name, StandardCost
+FROM Production.Product
+ORDER BY StandardCost DESC;
+--2
+SELECT Name, StandardCost
+FROM Production.Product
+WHERE StandardCost = (SELECT MAX(StandardCost) AS MaxCost
+						FROM Production.Product);
+--3
+SELECT Name, StandardCost
+FROM 
+	(
+	SELECT Name, StandardCost, MAX(StandardCost) OVER () AS MaxCost
+	FROM Production.Product
+	) t
+WHERE StandardCost=MaxCost;
+--4
+SELECT Name, StandardCost
+FROM
+	(
+	SELECT Name, StandardCost, RANK() OVER (ORDER BY StandardCost DESC) as rnk
+	FROM Production.Product
+	)t
+WHERE rnk=1;
+3. Найти страны, в которые за последний год не было куплено ни одного тура. (схема GROUP2)
+SELECT Country
+FROM Tours_Dim 
+WHERE IDTours NOT IN
+	(
+	SELECT IDTours
+	FROM Sales_Fct 
+	WHERE DATEADD(year, -1, GETDATE()) < DataSales
+	);
+4. Найти для каждого менеджера кол-во продаж за последние 15 лет.  (схема GROUP2)
+SELECT FirstName, LastName, COUNT(1), OVER (PARTITION BY FirstName, LastName) AS cnt
+FROM 
+	(
+	SELECT FirstName, LastName
+	FROM  SalesFct AS s LEFT JOIN Managers_Dim AS m ON s.IDManager = m.IDManager 
+	WHERE DATEADD(year, -15, GETDATE()) < DataSales
+	) t;
+
+5. 
+Users (
+    id bigint NOT NULL,
+    email varchar(255) NOT NULL
+);
+
+Notifications (
+    id bigint NOT NULL,
+    user_id bigint NOT NULL,
+    category varchar(100),
+    is_read boolean DEFAULT false
+);
+
+Найти список категорий для пользователя alex@gmail.com, в которых более 50 непрочитанных нотификаций
+SELECT category, email
+FROM Table
+WHERE
+
+SELECT category, email
+FROM (
+		SELECT category, email, COUNT(1) AS cnt
+		FROM Table
+		GROUP BY category, email
+		WHERE is_read boolean IS 'false') t
+WHERE cnt > 50;
