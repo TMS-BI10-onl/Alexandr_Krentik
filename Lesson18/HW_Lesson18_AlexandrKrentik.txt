@@ -1,0 +1,57 @@
+--1. Покажите всех менеджеров, которые имеют в подчинении больше 6-ти сотрудников.
+SELECT Manager_ID, COUNT(1) AS CNT
+FROM EMPLOYEES
+GROUP BY Manager_ID
+HAVING COUNT(1) > 6;
+
+--2. Вывести min и max зарплату с вычетом commission_pct для каждого департамента. (commission_pct на базе указывается в процентах). 
+SELECT e.DEPARTMENTS_NAME,
+		MIN(SALARY_WITHOUT_COMMISSION) AS MIN_SALARY,
+		MAX(SALARY_WITHOUT_COMMISSION) AS MAX_SALARY
+FROM
+	(
+	SELECT e.DEPARTMENTS_NAME, e.SALARY-e.SALARY/100*e.COMMISSION_PCT AS SALARY_WITHOUT_COMMISSION
+	FROM EMPLOYEES AS e JOIN DEPARTMENTS AS d ON e.DEPARTMENTS_ID = d.DEPARTMENTS_ID
+	) t
+GROUP BY e.DEPARTMENTS_NAME;
+
+--3. Вывести только регион, где работают больше всего людей.
+SELECT c.REGION_NAME
+FROM 
+	(
+	SELECT TOP 1 WITH TIES c.REGION_NAME, COUNT(1) AS CNT
+	FROM EMPLOYEES AS e JOIN DEPARTMENTS AS d ON e.DEPARTMENTS_ID = d.DEPARTMENTS_ID
+						JOIN LOCATIONS AS l ON d.LOCATION_ID = l.LOCATION_ID
+						JOIN COUNTRIES AS c ON l.COUNTRY_ID = c.COUNTRY_ID
+						JOIN REGIONS AS r ON c.REGION_ID = r.REGION_ID
+	GROUP BY REGION_NAME
+	ORDER BY REGION_NAME DESC
+	) t
+;
+
+--4. Найдите разницу в процентах между средней зп по каждому департаменту от общей средней (по всем департаментам).
+SELECT e.DEPARTMENTS_NAME, avg_dep/avg_all*100 AS diff_pct
+FROM
+	(
+	SELECT DISTINCT e.DEPARTMENTS_NAME,
+			AVG(SALARY) OVER () as avg_all,
+			AVG(SALARY) OVER (PARTITION BY e.DEPARTMENTS_NAME ORDER BY SALARY) as avg_dep
+	FROM EMPLOYEES AS e JOIN DEPARTMENTS AS d ON e.DEPARTMENTS_ID = d.DEPARTMENTS_ID
+	) t
+;
+
+--5. Найдите людей, кто проработал больше, чем 10 лет в одном департаменте. 
+SELECT e.FIRST_NAME, e.LAST_NAME
+FROM EMPLOYEES AS e JOIN JOB_HISTORY AS jh ON e.EMPLOYEE_ID = jh.EMPLOYEE_ID
+WHERE YEAR(START_DATE)>= YEAR(DATEADD(year, -10, END_DATE)) AND
+		YEAR(START_DATE)>= YEAR(DATEADD(year, -10, GETDATE()));
+
+--6. Найдите людей, кто занимает 5-10 место по размеру зарплаты.
+SELECT FIRST_NAME, LAST_NAME, SALARY
+FROM
+	(
+	SELECT FIRST_NAME, LAST_NAME, SALARY,
+			DENSE_RANK() OVER (PARTITION BY EMPLOYEE_ID ORDER BY SALARY DESC) as rnk
+	FROM EMPLOYEES
+	) t
+WHERE rnk BETWEEN 5 AND 10;
