@@ -1,0 +1,22 @@
+Well done!
+
+2. -0.5
+Can be solved in one query.
+
+3. -0.75
+No need in the subquery. Also, order by shoul be by count.
+
+4. -0.5
+Can be solved in one query.
+
+5. 
+Where should have conditions with OR. 
+Better way: WHERE DATEDIFF(year, start_date, ISNULL(end_date, GETDATE()))>10
+
+Mark: 8
+
+Test notes:
+KPI font is not the same.
+Count of movies - null values is not filtered out. 
+
+Test mark: 9
